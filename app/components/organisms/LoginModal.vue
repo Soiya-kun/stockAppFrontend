@@ -30,6 +30,7 @@ export default Vue.extend({
   },
   methods: {
     login () {
+      this.$emit('close');
       const form = new FormData();
       form.append('username', this.$data.username);
       form.append('password', this.$data.password);

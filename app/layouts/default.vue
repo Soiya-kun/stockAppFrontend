@@ -16,11 +16,10 @@
         <nav :class="{'block': $data.isNavOpened, 'hidden': !$data.isNavOpened}" class="flex-grow lg:block px-4 pb-4 lg:pb-0 lg:overflow-y-auto bg-gray-100">
           <div
             class="flex justify-between items-center block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline cursor-pointer items-center"
+            @click="$data.isLoginOpened=true"
           >
-            <div @click="$data.isLoginOpened=true">
-              <div class="flex justify-between items-center block px-8 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline cursor-pointer">
-                login
-              </div>
+            <div class="flex justify-between items-center block px-8 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline cursor-pointer">
+              login
             </div>
           </div>
         </nav>
