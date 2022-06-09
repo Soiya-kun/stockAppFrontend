@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  nuxt:
+    ports:
+      - 3000:3000
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    command: >
+      ash -c "yarn install &&
+      yarn dev"
