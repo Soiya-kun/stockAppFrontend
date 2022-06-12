@@ -53,15 +53,15 @@ export default Vue.extend({
           market: row[2],
           industry: row[3],
           b_date: `${row[4].substr(0, 4)}-${row[4].substr(4, 2)}-${row[4].substr(6, 2)}`,
-          opened_price: row[5].replaceAll('-', '0'),
-          high_price: row[8].replaceAll('-', '0'),
-          low_price: row[9].replaceAll('-', '0'),
-          closed_price: row[10].replaceAll('-', '0'),
-          volume: row[11].replaceAll('-', '0'),
-          transaction_price: row[12].replaceAll('-', '0'),
-          market_capitalization: row[13].replaceAll('-', '0'),
-          low_limit: row[14].replaceAll('-', '0'),
-          high_limit: row[15].replaceAll('-', '0')
+          closed_price: row[5].replaceAll('-', '0'),
+          opened_price: row[9].replaceAll('-', '0'),
+          high_price: row[10].replaceAll('-', '0'),
+          low_price: row[11].replaceAll('-', '0'),
+          volume: row[12].replaceAll('-', '0'),
+          transaction_price: row[13].replaceAll('-', '0'),
+          market_capitalization: row[14].replaceAll('-', '0'),
+          low_limit: row[15].replaceAll('-', '0'),
+          high_limit: row[16].replaceAll('-', '0')
         };
         this.$data.stockDataList.push(data);
       }

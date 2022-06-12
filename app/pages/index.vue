@@ -1,8 +1,14 @@
 <template>
   <div>
+    <AtomSelectBox
+      v-model="selectedSc"
+     item-text="text"
+     item-value="value"
+     :items="scForSelectBox"
+    />
     <GChart
       type="ComboChart"
-      :data="data"
+      :data="stocksComputed"
       :options="options"
       :createChart="
       (el, google, type) => {
@@ -30,19 +36,23 @@
 import Vue from 'vue';
 // @ts-ignore
 import {GChart} from "vue-google-charts/legacy";
+import AtomSelectBox from "~/components/atoms/AtomSelectBox.vue";
+import {StockResponse} from "~/interface/stock";
 
 export default Vue.extend({
   components: {
+    AtomSelectBox,
     GChart
   },
   data() {
     return {
       scList: [],
+      selectedSc: "0001",
       options: {
-        height: 400,
+        height: 600,
         width: 600,
         chartArea: {
-          left: '7%',
+          left: '15%',
           width: '70%'
         },
         series: {
@@ -62,6 +72,7 @@ export default Vue.extend({
           width: '70%'
         }
       },
+      stocks: [],
       data: [
         ['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma10'],
         ['2017-11-16', 174, 172, 171, 168, 175, 170],
@@ -106,8 +117,30 @@ export default Vue.extend({
       ]
     }
   },
+  computed: {
+    scForSelectBox() {
+      return this.$data.scList.map((sc: string) => {
+        return { text: sc, value: sc}
+      })
+    },
+    stocksComputed() {
+      // const stocks: [any] = [['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma10']];
+      const stocks: [any] = [['Date', 'High', 'Open', 'Close', 'Low']];
+      this.$data.stocks.forEach((stock: StockResponse) => {
+        console.log([stock.b_date, stock.high_price, stock.opened_price, stock.closed_price, stock.low_price]);
+        stocks.push([stock.b_date, stock.high_price, stock.opened_price, stock.closed_price, stock.low_price]);
+      });
+      return stocks;
+    }
+  },
+  watch: {
+    async selectedSc() {
+      this.$data.stocks = await this.$axios.$get(`/api/stock/list/${this.$data.selectedSc}`);
+    }
+  },
   async mounted() {
     this.$data.scList = await this.$axios.$get('/api/stock/sc/list');
+    this.$data.stocks = await this.$axios.$get(`/api/stock/list/${this.$data.selectedSc}`);
   },
   methods: {
   }
