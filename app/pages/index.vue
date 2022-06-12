@@ -135,8 +135,8 @@ export default Vue.extend({
         ]);
       });
       stocks = stocks.slice(
-        this.$data.stocks.length - this.$data.dayCount - 1 + Number(this.$data.dayBeforeCount),
-        this.$data.stocks.length - 1 + Number(this.$data.dayBeforeCount)
+        this.$data.stocks.length - this.$data.dayCount + Number(this.$data.dayBeforeCount),
+        this.$data.stocks.length + Number(this.$data.dayBeforeCount)
       );
       stocks.unshift(['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma20']);
       return stocks;
@@ -150,8 +150,8 @@ export default Vue.extend({
         ]);
       });
       volumes = volumes.slice(
-        this.$data.stocks.length - this.$data.dayCount - 1 + Number(this.$data.dayBeforeCount),
-        this.$data.stocks.length - 1 + Number(this.$data.dayBeforeCount)
+        this.$data.stocks.length - this.$data.dayCount + Number(this.$data.dayBeforeCount),
+        this.$data.stocks.length + Number(this.$data.dayBeforeCount)
       );
       volumes.unshift(['Date', 'Volume']);
       return volumes;
