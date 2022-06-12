@@ -124,11 +124,33 @@ export default Vue.extend({
       })
     },
     stocksComputed() {
-      // const stocks: [any] = [['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma10']];
-      const stocks: [any] = [['Date', 'High', 'Open', 'Close', 'Low']];
-      this.$data.stocks.forEach((stock: StockResponse) => {
-        console.log([stock.b_date, stock.high_price, stock.opened_price, stock.closed_price, stock.low_price]);
-        stocks.push([stock.b_date, stock.high_price, stock.opened_price, stock.closed_price, stock.low_price]);
+      const stocks: [any] = [['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma20']];
+      this.$data.stocks.forEach((stock: StockResponse, index: number, array: StockResponse[]) => {
+        let ma5: number|null = null;
+        if (index >= 5) {
+          ma5 = array.slice(index-5, index).map((stock: StockResponse) => {
+            return stock.closed_price;
+          }).reduce((sum: number, closed_price:number ) => {
+            return sum + closed_price;
+          }) / 5
+        }
+        let ma20: number|null = null;
+        if (index >= 20) {
+          ma20 = array.slice(index-20, index).map((stock: StockResponse) => {
+            return stock.closed_price;
+          }).reduce((sum: number, closed_price:number ) => {
+            return sum + closed_price;
+          }) / 20
+        }
+        stocks.push([
+          stock.b_date,
+          stock.high_price,
+          stock.opened_price,
+          stock.closed_price,
+          stock.low_price,
+          ma5,
+          ma20
+        ]);
       });
       return stocks;
     }
