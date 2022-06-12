@@ -6,6 +6,20 @@
      item-value="value"
      :items="scForSelectBox"
     />
+    何日前までか
+    <AtomInput
+      v-model="dayBeforeCount"
+      :max="0"
+      type="number"
+      class="w-48"
+    />
+    何日分か
+    <AtomInput
+      v-model="dayCount"
+      :min="1"
+      type="number"
+      class="w-48"
+    />
     <GChart
       type="ComboChart"
       :data="stocksComputed"
@@ -20,7 +34,7 @@
       <GChart
         class="-top-6 h-36 absolute"
         type="ColumnChart"
-        :data="volume"
+        :data="volumeComputed"
         :options="volumeOptions"
         :createChart="
       (el, google, type) => {
@@ -38,14 +52,18 @@ import Vue from 'vue';
 import {GChart} from "vue-google-charts/legacy";
 import AtomSelectBox from "~/components/atoms/AtomSelectBox.vue";
 import {StockResponse} from "~/interface/stock";
+import AtomInput from "~/components/atoms/AtomInput.vue";
 
 export default Vue.extend({
   components: {
+    AtomInput,
     AtomSelectBox,
     GChart
   },
   data() {
     return {
+      dayCount: 30,
+      dayBeforeCount: 0,
       scList: [],
       selectedSc: "0001",
       options: {
@@ -68,53 +86,11 @@ export default Vue.extend({
         height: 100,
         width: 600,
         chartArea: {
-          left: '7%',
+          left: '15%',
           width: '70%'
         }
       },
       stocks: [],
-      data: [
-        ['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma10'],
-        ['2017-11-16', 174, 172, 171, 168, 175, 170],
-        ['2017-11-17', 173, 171, 172, 170, 165, 150],
-        ['2017-11-18', 173, 172, 171, 170, 168, 150],
-        ['2017-11-16', 174, 172, 171, 168, 175, 170],
-        ['2017-11-17', 173, 171, 172, 170, 165, 150],
-        ['2017-11-18', 173, 172, 171, 170, 168, 150],
-        ['2017-11-16', 174, 172, 171, 168, 175, 170],
-        ['2017-11-17', 173, 171, 172, 170, 165, 150],
-        ['2017-11-18', 173, 172, 171, 170, 168, 150],
-        ['2017-11-16', 174, 172, 171, 168, 175, 170],
-        ['2017-11-17', 173, 171, 172, 170, 165, 150],
-        ['2017-11-18', 173, 172, 171, 170, 168, 150],
-        ['2017-11-16', 174, 172, 171, 168, 175, 170],
-        ['2017-11-17', 173, 171, 172, 170, 165, 150],
-        ['2017-11-18', 173, 172, 171, 170, 168, 150],
-        ['2017-11-16', 174, 172, 171, 168, 175, 170],
-        ['2017-11-17', 173, 171, 172, 170, 165, 150],
-        ['2017-11-18', 173, 172, 171, 170, 168, 150],
-      ],
-      volume: [
-        ['Date', 'Volume'],
-        ['2017-11-16', 1234],
-        ['2017-11-17', 2345],
-        ['2017-11-18', 1234],
-        ['2017-11-16', 1234],
-        ['2017-11-17', 2345],
-        ['2017-11-18', 1234],
-        ['2017-11-16', 1234],
-        ['2017-11-17', 2345],
-        ['2017-11-18', 1234],
-        ['2017-11-16', 1234],
-        ['2017-11-17', 2345],
-        ['2017-11-18', 1234],
-        ['2017-11-16', 1234],
-        ['2017-11-17', 2345],
-        ['2017-11-18', 1234],
-        ['2017-11-16', 1234],
-        ['2017-11-17', 2345],
-        ['2017-11-18', 1234],
-      ]
     }
   },
   computed: {
@@ -124,11 +100,17 @@ export default Vue.extend({
       })
     },
     stocksComputed() {
-      const stocks: [any] = [['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma20']];
+      if (this.$data.dayCount < 0) {
+        this.$data.dayCount = 1;
+      }
+      if (this.$data.dayBeforeCount > 1) {
+        this.$data.dayBeforeCount = 0;
+      }
+      let stocks: any[] = [];
       this.$data.stocks.forEach((stock: StockResponse, index: number, array: StockResponse[]) => {
         let ma5: number|null = null;
         if (index >= 5) {
-          ma5 = array.slice(index-5, index).map((stock: StockResponse) => {
+          ma5 = array.slice(index-4, index+1).map((stock: StockResponse) => {
             return stock.closed_price;
           }).reduce((sum: number, closed_price:number ) => {
             return sum + closed_price;
@@ -136,7 +118,7 @@ export default Vue.extend({
         }
         let ma20: number|null = null;
         if (index >= 20) {
-          ma20 = array.slice(index-20, index).map((stock: StockResponse) => {
+          ma20 = array.slice(index-19, index+1).map((stock: StockResponse) => {
             return stock.closed_price;
           }).reduce((sum: number, closed_price:number ) => {
             return sum + closed_price;
@@ -152,7 +134,27 @@ export default Vue.extend({
           ma20
         ]);
       });
+      stocks = stocks.slice(
+        this.$data.stocks.length - this.$data.dayCount - 1 + Number(this.$data.dayBeforeCount),
+        this.$data.stocks.length - 1 + Number(this.$data.dayBeforeCount)
+      );
+      stocks.unshift(['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma20']);
       return stocks;
+    },
+    volumeComputed() {
+      let volumes: any[] = [];
+      this.$data.stocks.forEach((stock: StockResponse) => {
+        volumes.push([
+          stock.b_date,
+          stock.volume
+        ]);
+      });
+      volumes = volumes.slice(
+        this.$data.stocks.length - this.$data.dayCount - 1 + Number(this.$data.dayBeforeCount),
+        this.$data.stocks.length - 1 + Number(this.$data.dayBeforeCount)
+      );
+      volumes.unshift(['Date', 'Volume']);
+      return volumes;
     }
   },
   watch: {
