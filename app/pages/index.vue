@@ -1,47 +1,92 @@
 <template>
   <div>
-    <AtomSelectBox
-      v-model="selectedSc"
-     item-text="text"
-     item-value="value"
-     :items="scForSelectBox"
-    />
-    何日前までか
-    <AtomInput
-      v-model="dayBeforeCount"
-      :max="0"
-      type="number"
-      class="w-48"
-    />
-    何日分か
-    <AtomInput
-      v-model="dayCount"
-      :min="1"
-      type="number"
-      class="w-48"
-    />
-    <GChart
-      type="ComboChart"
-      :data="stocksComputed"
-      :options="options"
-      :createChart="
-      (el, google, type) => {
-        return new google.visualization[type](el)
-      }
-    "
-    />
-    <div class="relative">
-      <GChart
-        class="-top-6 h-36 absolute"
-        type="ColumnChart"
-        :data="volumeComputed"
-        :options="volumeOptions"
-        :createChart="
-      (el, google, type) => {
-        return new google.visualization[type](el)
-      }
-    "
-      />
+    <div class="flex w-full">
+      <div>
+        <AtomSelectBox
+          v-model="selectedSc"
+          item-text="text"
+          item-value="value"
+          :items="scForSelectBox"
+        />
+        <div>
+          何日前までか
+          <AtomInput
+            v-model="dayBeforeCount"
+            :max="0"
+            type="number"
+            class="w-24"
+          />
+          何日分か
+          <AtomInput
+            v-model="dayCount"
+            :min="1"
+            type="number"
+            class="w-24"
+          />
+        </div>
+        <div>
+          何週前までか
+          <AtomInput
+            v-model="weekBeforeCount"
+            :max="0"
+            type="number"
+            class="w-24"
+          />
+          何週分か
+          <AtomInput
+            v-model="weekCount"
+            :min="1"
+            type="number"
+            class="w-24"
+          />
+        </div>
+      </div>
+      <div>
+        <GChart
+          type="ComboChart"
+          :data="stocksComputed"
+          :options="options"
+          :createChart="
+          (el, google, type) => {
+            return new google.visualization[type](el)
+          }
+        "
+        />
+        <GChart
+          class="h-36"
+          type="ColumnChart"
+          :data="volumeComputed"
+          :options="volumeOptions"
+          :createChart="
+          (el, google, type) => {
+            return new google.visualization[type](el)
+          }
+        "
+        />
+      </div>
+      <div>
+        <GChart
+          type="ComboChart"
+          :data="stocksComputedWeek"
+          :options="options"
+          :createChart="
+          (el, google, type) => {
+            return new google.visualization[type](el)
+          }
+        "
+        />
+        <GChart
+          class="h-36"
+          type="ColumnChart"
+          :data="volumeComputedWeek"
+          :options="volumeOptions"
+          :createChart="
+          (el, google, type) => {
+            return new google.visualization[type](el)
+          }
+        "
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -62,13 +107,15 @@ export default Vue.extend({
   },
   data() {
     return {
-      dayCount: 30,
+      dayCount: 45,
       dayBeforeCount: 0,
+      weekCount: 48,
+      weekBeforeCount: 0,
       scList: [],
       selectedSc: "0001",
       options: {
         height: 600,
-        width: 600,
+        width: 750,
         chartArea: {
           left: '15%',
           width: '70%'
@@ -84,7 +131,7 @@ export default Vue.extend({
       },
       volumeOptions: {
         height: 100,
-        width: 600,
+        width: 750,
         chartArea: {
           left: '15%',
           width: '70%'
@@ -124,6 +171,14 @@ export default Vue.extend({
             return sum + closed_price;
           }) / 20
         }
+        let ma60: number|null = null;
+        if (index >= 60) {
+          ma60 = array.slice(index-59, index+1).map((stock: StockResponse) => {
+            return stock.closed_price;
+          }).reduce((sum: number, closed_price:number ) => {
+            return sum + closed_price;
+          }) / 60
+        }
         stocks.push([
           stock.b_date,
           stock.high_price,
@@ -131,14 +186,15 @@ export default Vue.extend({
           stock.closed_price,
           stock.low_price,
           ma5,
-          ma20
+          ma20,
+          ma60
         ]);
       });
       stocks = stocks.slice(
-        this.$data.stocks.length - this.$data.dayCount + Number(this.$data.dayBeforeCount),
+        this.$data.stocks.length - Number(this.$data.dayCount) + Number(this.$data.dayBeforeCount),
         this.$data.stocks.length + Number(this.$data.dayBeforeCount)
       );
-      stocks.unshift(['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma20']);
+      stocks.unshift(['Date', 'High', 'Open', 'Close', 'Low', 'ma5', 'ma20', 'ma60']);
       return stocks;
     },
     volumeComputed() {
@@ -150,12 +206,124 @@ export default Vue.extend({
         ]);
       });
       volumes = volumes.slice(
-        this.$data.stocks.length - this.$data.dayCount + Number(this.$data.dayBeforeCount),
+        this.$data.stocks.length - Number(this.$data.dayCount) + Number(this.$data.dayBeforeCount),
         this.$data.stocks.length + Number(this.$data.dayBeforeCount)
       );
       volumes.unshift(['Date', 'Volume']);
       return volumes;
-    }
+    },
+    stocksComputedWeek() {
+      if (this.$data.stocks.length === 0) {
+        return '';
+      }
+      let stocks: any[] = [];
+      let highPrice = 0;
+      let openedPrice = 0;
+      let closedPrice = 0;
+      let lowPrice = 99999999999;
+      let lastStock: {closed_price: number} = {closed_price: 0};
+      let firstDateOfMonday = new Date(this.$data.stocks[0].b_date);
+      firstDateOfMonday.setDate(firstDateOfMonday.getDate() + 1 - firstDateOfMonday.getDay());
+      for (const stock of this.$data.stocks) {
+        const thisDate = new Date(stock.b_date);
+        let diffMilliSec = thisDate.getTime() - firstDateOfMonday.getTime();
+        if (diffMilliSec / 1000 / 60 / 60 / 24 >= 5) {
+          stocks.push([
+            `${firstDateOfMonday.getFullYear()}-${firstDateOfMonday.getMonth()+1}-${firstDateOfMonday.getDate()}`,
+            highPrice,
+            openedPrice,
+            lastStock.closed_price,
+            lowPrice
+          ]);
+          firstDateOfMonday.setDate(firstDateOfMonday.getDate() + 7);
+          highPrice = 0;
+          openedPrice = 0;
+          closedPrice = 0;
+          lowPrice = 99999999999;
+        }
+        if (stock.high_price > highPrice) {
+          highPrice = stock.high_price;
+        }
+        if (stock.low_price < lowPrice) {
+          lowPrice = stock.low_price;
+        }
+        if (openedPrice === 0) {
+          openedPrice = stock.opened_price;
+        }
+        lastStock = stock;
+      }
+      stocks.push([
+        `${firstDateOfMonday.getFullYear()}-${firstDateOfMonday.getMonth() + 1}-${firstDateOfMonday.getDate()}`,
+        highPrice,
+        openedPrice,
+        this.$data.stocks[this.$data.stocks.length - 1].closed_price,
+        lowPrice
+      ]);
+      stocks = stocks.map((data: [], index: number, array: any[]) => {
+        let ma13: number|null = null;
+        if (index >= 13) {
+          ma13 = array.slice(index-12, index+1).map((data_: any) => {
+            return data_[3];
+          }).reduce((sum: number, closed_price:number ) => {
+            return sum + closed_price;
+          }) / 13
+        }
+        // @ts-ignore
+        data.push(ma13);
+        return data;
+      })
+      stocks = stocks.map((data: [], index: number, array: any[]) => {
+        let ma26: number|null = null;
+        if (index >= 26) {
+          ma26 = array.slice(index-25, index+1).map((data_: any) => {
+            return data_[3];
+          }).reduce((sum: number, closed_price:number ) => {
+            return sum + closed_price;
+          }) / 26
+        }
+        // @ts-ignore
+        data.push(ma26);
+        return data;
+      })
+      stocks = stocks.slice(
+        stocks.length - Number(this.$data.weekCount) + Number(this.$data.weekBeforeCount),
+        stocks.length + Number(this.$data.weekBeforeCount)
+      );
+      stocks.unshift(['Date', 'High', 'Open', 'Close', 'Low', 'ma13', 'ma26']);
+      return stocks;
+    },
+    volumeComputedWeek() {
+      if (this.$data.stocks.length === 0) {
+        return '';
+      }
+      let volumes: any[] = [];
+      let volume = 0;
+      let firstDateOfMonday = new Date(this.$data.stocks[0].b_date);
+      firstDateOfMonday.setDate(firstDateOfMonday.getDate() + 1 - firstDateOfMonday.getDay());
+      for (const stock of this.$data.stocks) {
+        const thisDate = new Date(stock.b_date);
+        let diffMilliSec = thisDate.getTime() - firstDateOfMonday.getTime();
+        if (diffMilliSec / 1000 / 60 / 60 / 24 >= 5) {
+          volumes.push([
+            `${firstDateOfMonday.getFullYear()}-${firstDateOfMonday.getMonth()+1}-${firstDateOfMonday.getDate()}`,
+            volume
+          ]);
+          firstDateOfMonday.setDate(firstDateOfMonday.getDate() + 7);
+          volume = 0;
+        }
+        volume += stock.volume;
+      }
+      volumes.push([
+        `${firstDateOfMonday.getFullYear()}-${firstDateOfMonday.getMonth() + 1}-${firstDateOfMonday.getDate()}`,
+        volume
+      ]);
+      volumes = volumes.slice(
+        volumes.length - Number(this.$data.weekCount) + Number(this.$data.weekBeforeCount),
+        volumes.length + Number(this.$data.weekBeforeCount)
+      );
+      volumes.unshift(['Date', 'Volume']);
+      return volumes;
+    },
   },
   watch: {
     async selectedSc() {
