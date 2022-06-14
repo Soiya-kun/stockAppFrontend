@@ -63,7 +63,7 @@ export default Vue.extend({
   },
   computed: {
     buyValuation(): number {
-      return this.$data.buyPosition.volume * this.$props.stock[2];
+      return this.$data.buyPosition.volume * this.$props.stock[2] * 100;
     }
   },
   methods: {

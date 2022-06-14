@@ -1,6 +1,6 @@
 <template>
   <div class="p-4">
-    <div class="flex">
+    <div class="flex mb-12">
       <AtomInputFileButton
         v-model="$data.csvFile"
         type="file"
@@ -15,6 +15,14 @@
     <div v-for="(data, i) of $data.stockDataList" :key="i">
       {{ data }}
     </div>
+    <div class="flex mb-12">
+      <AtomInput v-model="$data.splitSc" />
+      <AtomInput v-model="$data.splitDate" type="date" />
+      <AtomInput v-model="$data.splitRatio" type="number" />
+      <AtomButton @click="postSplit">
+        split送信
+      </AtomButton>
+    </div>
   </div>
 </template>
 
@@ -22,14 +30,18 @@
 import Vue from 'vue';
 import AtomInputFileButton from "~/components/atoms/AtomInputFileButton.vue";
 import AtomButton from "~/components/atoms/AtomButton.vue";
+import AtomInput from "~/components/atoms/AtomInput.vue";
 
 export default Vue.extend({
-  components: {AtomButton, AtomInputFileButton},
+  components: {AtomInput, AtomButton, AtomInputFileButton},
   data() {
     return {
       csvFile: { name: '' } as File,
       reader: new FileReader(),
-      stockDataList: []
+      stockDataList: [],
+      splitSc: '',
+      splitDate: '',
+      splitRatio: ''
     }
   },
   watch: {
@@ -71,7 +83,13 @@ export default Vue.extend({
     async postData (): Promise<void> {
       await this.$axios.$post('/api/stock/list', this.$data.stockDataList);
       this.$data.stockDataList = [];
-    }
+    },
+    async postSplit (): Promise<void> {
+      await this.$axios.$post(
+        '/api/stock/split',
+        { sc: this.$data.splitSc, split_date: this.$data.splitDate, split_ratio: this.$data.splitRatio}
+      );
+    },
   }
 });
 </script>
