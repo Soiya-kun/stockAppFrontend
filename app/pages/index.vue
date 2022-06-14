@@ -16,19 +16,12 @@
             type="number"
             class="w-24"
           />
+        </div>
+        <div>
           何日分か
           <AtomInput
             v-model="dayCount"
             :min="1"
-            type="number"
-            class="w-24"
-          />
-        </div>
-        <div>
-          何週前までか
-          <AtomInput
-            v-model="weekBeforeCount"
-            :max="0"
             type="number"
             class="w-24"
           />
@@ -40,6 +33,7 @@
             class="w-24"
           />
         </div>
+        <Simulation :stock="stocksComputed[stocksComputed.length-1]" />
       </div>
       <div>
         <GChart
@@ -98,9 +92,11 @@ import {GChart} from "vue-google-charts/legacy";
 import AtomSelectBox from "~/components/atoms/AtomSelectBox.vue";
 import {StockResponse} from "~/interface/stock";
 import AtomInput from "~/components/atoms/AtomInput.vue";
+import Simulation from "~/components/organisms/Simulation.vue";
 
 export default Vue.extend({
   components: {
+    Simulation,
     AtomInput,
     AtomSelectBox,
     GChart
@@ -110,7 +106,6 @@ export default Vue.extend({
       dayCount: 45,
       dayBeforeCount: 0,
       weekCount: 48,
-      weekBeforeCount: 0,
       scList: [],
       selectedSc: "0001",
       options: {
@@ -224,7 +219,10 @@ export default Vue.extend({
       let lastStock: {closed_price: number} = {closed_price: 0};
       let firstDateOfMonday = new Date(this.$data.stocks[0].b_date);
       firstDateOfMonday.setDate(firstDateOfMonday.getDate() + 1 - firstDateOfMonday.getDay());
-      for (const stock of this.$data.stocks) {
+      const originalStocks = this.$data.stocks.slice(
+        0, this.$data.stocks.length + Number(this.$data.dayBeforeCount)
+      );
+      for (const stock of originalStocks) {
         const thisDate = new Date(stock.b_date);
         let diffMilliSec = thisDate.getTime() - firstDateOfMonday.getTime();
         if (diffMilliSec / 1000 / 60 / 60 / 24 >= 5) {
@@ -286,8 +284,8 @@ export default Vue.extend({
         return data;
       })
       stocks = stocks.slice(
-        stocks.length - Number(this.$data.weekCount) + Number(this.$data.weekBeforeCount),
-        stocks.length + Number(this.$data.weekBeforeCount)
+        stocks.length - Number(this.$data.weekCount),
+        stocks.length - 1
       );
       stocks.unshift(['Date', 'High', 'Open', 'Close', 'Low', 'ma13', 'ma26']);
       return stocks;
@@ -300,7 +298,10 @@ export default Vue.extend({
       let volume = 0;
       let firstDateOfMonday = new Date(this.$data.stocks[0].b_date);
       firstDateOfMonday.setDate(firstDateOfMonday.getDate() + 1 - firstDateOfMonday.getDay());
-      for (const stock of this.$data.stocks) {
+      const originalStocks = this.$data.stocks.slice(
+        0, this.$data.stocks.length + Number(this.$data.dayBeforeCount)
+      );
+      for (const stock of originalStocks) {
         const thisDate = new Date(stock.b_date);
         let diffMilliSec = thisDate.getTime() - firstDateOfMonday.getTime();
         if (diffMilliSec / 1000 / 60 / 60 / 24 >= 5) {
@@ -318,8 +319,8 @@ export default Vue.extend({
         volume
       ]);
       volumes = volumes.slice(
-        volumes.length - Number(this.$data.weekCount) + Number(this.$data.weekBeforeCount),
-        volumes.length + Number(this.$data.weekBeforeCount)
+        volumes.length - Number(this.$data.weekCount),
+        volumes.length - 1
       );
       volumes.unshift(['Date', 'Volume']);
       return volumes;
