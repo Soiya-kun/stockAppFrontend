@@ -4,13 +4,13 @@
       <span>寄付</span>
       <AtomInput v-model="$data.isApproaching" type="checkbox" />
     </div>
-    <div>
-      <span>現金</span>
+    <div class="my-1">
+      <span class="mr-2">現金</span>
       <AtomInput v-model="$data.cash" type="number" />
     </div>
-    <div>
-      <span>株数</span>
-      <div class="flex">
+    <div class="flex items-center my-1">
+      <span class="mr-2">株数</span>
+      <div class="flex items-center">
         <AtomInput v-model="$data.volume" type="number" class="mr-2" />
         <div>×100株</div>
       </div>
@@ -63,7 +63,7 @@ export default Vue.extend({
   },
   computed: {
     buyValuation(): number {
-      return this.$data.buyPosition.volume * this.$props.stock[2] * 100;
+      return this.$data.buyPosition.volume * this.$props.stock[3] * 100;
     }
   },
   methods: {
@@ -79,8 +79,8 @@ export default Vue.extend({
     settleBuying() {
       const price = this.$data.isApproaching ? this.$props.stock[2] : this.$props.stock[3];
       this.$data.cash += price * this.buyPosition.volume * 100;
-      this.$data.buyPosition = 0;
-      this.$data.volume = 0;
+      this.$data.buyPosition.totalPrice = 0;
+      this.buyPosition.volume = 0;
     }
   }
 });

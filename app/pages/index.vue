@@ -1,15 +1,17 @@
 <template>
   <div>
     <div class="flex w-full">
-      <div>
+      <div class="p-4">
         <AtomSelectBox
           v-model="selectedSc"
           item-text="text"
           item-value="value"
           :items="scForSelectBox"
         />
-        <div>
+        <div class="my-1">
+          <span>
           何日前までか
+          </span>
           <AtomInput
             v-model="dayBeforeCount"
             :max="0"
@@ -17,15 +19,19 @@
             class="w-24"
           />
         </div>
-        <div>
-          何日分か
+        <div class="my-1">
+          <span class="mr-2">
+            何日分か
+          </span>
           <AtomInput
             v-model="dayCount"
             :min="1"
             type="number"
-            class="w-24"
+            class="w-24 mr-4"
           />
-          何週分か
+          <span class="mr-2">
+            何週分か
+          </span>
           <AtomInput
             v-model="weekCount"
             :min="1"
@@ -33,7 +39,7 @@
             class="w-24"
           />
         </div>
-        <Simulation :stock="stocksComputed[stocksComputed.length-1]" />
+        <Simulation ref="simu" :stock="stocksComputed[stocksComputed.length-1]" />
       </div>
       <div>
         <GChart
@@ -104,7 +110,7 @@ export default Vue.extend({
   data() {
     return {
       dayCount: 45,
-      dayBeforeCount: 0,
+      dayBeforeCount: -150,
       weekCount: 48,
       scList: [],
       selectedSc: "0001",
@@ -329,13 +335,48 @@ export default Vue.extend({
   watch: {
     async selectedSc() {
       this.$data.stocks = await this.$axios.$get(`/api/stock/list/${this.$data.selectedSc}`);
+    },
+    dayBeforeCount(ov, nv) {
+      if (nv >= 0) {
+        this.$data.dayBeforeCount = -150;
+      }
     }
   },
+  beforeDestroy() {
+    // @ts-ignore
+    document.removeEventListener('keydown', this.onKeyDown)
+  },
   async mounted() {
+    // @ts-ignore
+    document.addEventListener('keydown', this.onKeyDown)
     this.$data.scList = await this.$axios.$get('/api/stock/sc/list');
     this.$data.stocks = await this.$axios.$get(`/api/stock/list/${this.$data.selectedSc}`);
   },
   methods: {
+    onKeyDown(event: {key: string}) {
+      if (event.key === 'b') {
+        // @ts-ignore
+        this.$refs.simu.buy();
+      }
+      if (event.key === 'v') {
+        // @ts-ignore
+        this.$refs.simu.settleBuying();
+      }
+      if (event.key === 'ArrowRight') {
+        this.$data.dayBeforeCount = Number(this.$data.dayBeforeCount) + 1;
+      }
+      if (event.key === 'ArrowLeft') {
+        this.$data.dayBeforeCount = Number(this.$data.dayBeforeCount) - 1;
+      }
+      if (event.key === 'ArrowUp') {
+        // @ts-ignore
+        this.$refs.simu.volume = Number(this.$refs.simu.volume) + 1;
+      }
+      if (event.key === 'ArrowDown') {
+        // @ts-ignore
+        this.$refs.simu.volume = Number(this.$refs.simu.volume) - 1;
+      }
+    }
   }
 });
 </script>
