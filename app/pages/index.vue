@@ -110,7 +110,7 @@ export default Vue.extend({
   data() {
     return {
       dayCount: 45,
-      dayBeforeCount: -150,
+      dayBeforeCount: -350,
       weekCount: 48,
       scList: [],
       selectedSc: "0001",
