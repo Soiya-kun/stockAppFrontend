@@ -2,7 +2,7 @@
   <div>
     <div>
       <span>寄付</span>
-      <AtomInput v-model="$data.isApproaching" type="checkbox" />
+      <input v-model="$data.isApproaching" type="checkbox" />
     </div>
     <div class="my-1">
       <span class="mr-2">現金</span>

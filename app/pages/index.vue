@@ -376,6 +376,10 @@ export default Vue.extend({
         // @ts-ignore
         this.$refs.simu.volume = Number(this.$refs.simu.volume) - 1;
       }
+      if (event.key === 'y') {
+        // @ts-ignore
+        this.$refs.simu.isApproaching = !this.$refs.simu.isApproaching;
+      }
     }
   }
 });
